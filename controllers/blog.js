@@ -133,6 +133,7 @@ exports.listAllBlogsCategoriesTags = (req, res) => {
     .populate('tags', '_id name slug')
     .populate('postedBy', '_id name username profile')
     .sort({createdAt: -1})
+    .skip(skip)
     .limit(limit)
     .select('_id title slug excerpt categories tags postedBy createdAt updatedAt')
     .exec((err, data) => {
@@ -288,3 +289,21 @@ exports.photo = (req, res) => {
     })
 }
 
+exports.listRelated = (req, res) => {
+    // console.log(req.body.blog);
+    let limit = req.body.limit ? parseInt(req.body.limit) : 3;
+    const { _id, categories } = req.body.blog;
+
+    Blog.find({ _id: { $ne: _id }, categories: { $in: categories } })
+        .limit(limit)
+        .populate('postedBy', '_id name username profile')
+        .select('title slug excerpt postedBy createdAt updatedAt')
+        .exec((err, blogs) => {
+            if (err) {
+                return res.status(400).json({
+                    error: 'Blogs not found'
+                });
+            }
+            res.json(blogs);
+        });
+};
